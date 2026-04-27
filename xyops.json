@@ -1,0 +1,199 @@
+{
+	"type": "xypdf",
+	"description": "xyOps Portable Data Object",
+	"version": "1.0",
+	"xyops": "1.0.50",
+	"items": [
+		{
+			"type": "plugin",
+			"data": {
+				"id": "pmpkgszp94n8y8ac56",
+				"title": "Package Manager",
+				"enabled": true,
+				"type": "event",
+				"command": "npx -y @pixlcore/xyplug-pkg@1.0.0",
+				"script": "",
+				"kill": "all",
+				"runner": false,
+				"notes": "Manage all your system packages, including reporting outdated packages and performing automatic upgrades.",
+				"icon": "package-variant",
+				"params": [
+					{
+						"id": "tool",
+						"title": "Tool Select",
+						"type": "toolset",
+						"caption": "",
+						"data": {
+							"tools": [
+								{
+									"id": "outdated",
+									"title": "Outdated Packages",
+									"description": "Report all outdated packages, and optionally perform all necessary upgrades.",
+									"fields": [
+										{
+											"id": "send_email",
+											"title": "Send Email",
+											"type": "checkbox",
+											"value": true,
+											"caption": "Send email containing information about all outdated packages."
+										},
+										{
+											"id": "do_upgrade",
+											"title": "Perform Upgrades",
+											"type": "checkbox",
+											"value": false,
+											"caption": "Actually perform upgrades of all outdated packages to the latest releases."
+										},
+										{
+											"id": "email_addrs",
+											"title": "Email Addresses",
+											"type": "text",
+											"value": "",
+											"caption": "Send email to these specific addresses (comma-separated).",
+											"required": false
+										}
+									]
+								},
+								{
+									"id": "list",
+									"title": "List All Packages",
+									"description": "Generate a list of all installed packages.",
+									"fields": [
+										{
+											"id": "send_email",
+											"title": "Send Email",
+											"type": "checkbox",
+											"value": true,
+											"caption": "Send email containing information about all packages."
+										},
+										{
+											"id": "email_addrs",
+											"title": "Email Addresses",
+											"type": "text",
+											"value": "",
+											"caption": "Send email to these specific addresses (comma-separated).",
+											"required": false
+										}
+									]
+								},
+								{
+									"id": "sbom",
+									"title": "Software Bill of Materials",
+									"description": "Generate a SBOM file and attach it to the job output.",
+									"fields": [
+										{
+											"id": "sbom_format",
+											"title": "SBOM Format",
+											"type": "select",
+											"value": "SPDX, CycloneDX",
+											"caption": "Select which SBOM standard to follow."
+										},
+										{
+											"id": "file_format",
+											"title": "File Format",
+											"type": "select",
+											"value": "JSON, XML, YAML, TAG, RDF",
+											"caption": "Select the desired file format for the SBOM."
+										}
+									]
+								},
+								{
+									"id": "install",
+									"title": "Install Packages",
+									"description": "Install a specific set of packages.",
+									"fields": [
+										{
+											"id": "ids",
+											"title": "Package IDs",
+											"type": "text",
+											"value": "",
+											"caption": "List of package IDs to install (optionally with @versions), comma-separated.",
+											"required": true
+										}
+									]
+								},
+								{
+									"id": "upgrade",
+									"title": "Upgrade Packages",
+									"description": "Upgrade a specific set of packages.",
+									"fields": [
+										{
+											"id": "ids",
+											"title": "Package IDs",
+											"type": "text",
+											"value": "",
+											"caption": "List of package IDs to upgrade (optionally with @versions), comma-separated.",
+											"required": true
+										}
+									]
+								},
+								{
+									"id": "remove",
+									"title": "Remove Packages",
+									"description": "Remove a specific set of packages.",
+									"fields": [
+										{
+											"id": "ids",
+											"title": "Package IDs",
+											"type": "text",
+											"value": "",
+											"caption": "List of package IDs to remove, comma-separated.",
+											"required": true
+										}
+									]
+								},
+								{
+									"id": "backup",
+									"title": "Backup Packages",
+									"description": "Save the current state of all installed packages to a TOML file.",
+									"fields": []
+								},
+								{
+									"id": "restore",
+									"title": "Restore Packages",
+									"description": "Restore the state of all installed packages from an input TOML file.",
+									"fields": []
+								},
+								{
+									"id": "combo",
+									"title": "Combined Report",
+									"description": "Generate a single combined report from a multiplexed set of input reports.",
+									"fields": [
+										{
+											"id": "send_email",
+											"title": "Send Email",
+											"type": "checkbox",
+											"value": true,
+											"caption": "Send email containing information about all packages."
+										},
+										{
+											"id": "email_addrs",
+											"title": "Email Addresses",
+											"type": "text",
+											"value": "",
+											"caption": "Send email to these specific addresses (comma-separated).",
+											"required": false
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"id": "managers",
+						"title": "Package Managers",
+						"type": "json",
+						"value": {
+							"*": true,
+							"cpan": false,
+							"uv": false,
+							"vscode": false,
+							"vscodium": false
+						},
+						"caption": "Select which package managers to enable and/or disable."
+					}
+				]
+			}
+		}
+	]
+}

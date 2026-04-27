@@ -1,0 +1,8 @@
+node_modules/
+downloads/
+work/
+temp/
+agents/
+agents
+prompt.md
+test.sh
