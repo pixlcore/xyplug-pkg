@@ -8,7 +8,7 @@ This is a [xyOps](https://xyops.io) Event Plugin packaged as a pure Node.js / `n
 ## Features
 
 - Pure Node.js / `npx` marketplace plugin
-- Uses a cached standalone `meta-package-manager` binary at runtime
+- Supports two runtime launch methods for `meta-package-manager`: precompiled binary or `uvx`
 - Supports reporting, e-mail notifications, and actual package upgrades
 - Works across many different package managers on Linux, macOS, BSD, and Windows
 - Can generate SBOM files in SPDX or CycloneDX formats
@@ -19,12 +19,13 @@ This is a [xyOps](https://xyops.io) Event Plugin packaged as a pure Node.js / `n
 
 - `npx` (this comes pre-installed with xyOps and xySat)
 - Node.js 18 or newer
-- Network access from the job runner to GitHub Releases on first run, so the plugin can download the `meta-package-manager` standalone binary
 - One or more supported package managers installed on the target server
 - Sufficient OS privileges for the operation you want to perform
 
 Notes:
 
+- If you use the precompiled binary launcher, the job runner needs network access to GitHub Releases on first run, so the plugin can download the standalone `meta-package-manager` binary.
+- If you use the `uvx` launcher, `uvx` must already be installed and available on every target server where the plugin will run.
 - Read-only tools such as reports and SBOM generation usually work with normal user permissions.
 - Mutating tools such as install, upgrade, remove, and restore may require administrator or root privileges, depending on the package manager.
 - The plugin only works with package managers that are both supported by `meta-package-manager` and actually detected on the current server.
@@ -59,8 +60,28 @@ These parameters are available at the plugin level:
 
 | Parameter | Description |
 |-----------|-------------|
+| `MPM Launcher` | Selects how to run `meta-package-manager`: precompiled binary or `uvx`. |
 | `Tool Select` | Selects which package-management operation to run. |
 | `Package Managers` | JSON object that enables or disables individual package managers. |
+
+### MPM Launcher
+
+Available options:
+
+- `Binary`: Download and cache the precompiled standalone `meta-package-manager` executable, then run it directly.
+- `UVX`: Execute `meta-package-manager` via `uvx`, pinned to the plugin's bundled version, assuming `uvx` is already installed on the target server.
+
+Why this exists:
+
+- On some Linux systems, the upstream precompiled binaries may require a newer `glibc` than the server provides.
+- A common failure looks like: `/lib/x86_64-linux-gnu/libm.so.6: version GLIBC_2.38 not found`.
+- The `uvx` option gives users a compatibility fallback when the standalone binary does not run cleanly on their fleet.
+
+Recommended use:
+
+- Use `Binary` if you want the simplest setup and it works on your servers.
+- Use `UVX` if you have already standardized on Astral `uv`, or if the standalone binary fails due to `glibc` compatibility issues.
+- If you choose `UVX`, make sure it is present on every server that may run the Event.
 
 ### Package Managers JSON
 
@@ -345,7 +366,9 @@ If you want a cluster-wide summary, build a workflow that runs **Outdated Packag
 
 A few details about how the plugin works at runtime:
 
-- The plugin downloads the standalone `meta-package-manager` binary from GitHub Releases the first time it runs on a server and caches it in the job temp area.
+- The plugin can launch `meta-package-manager` in one of two ways, depending on your `MPM Launcher` selection.
+- In `Binary` mode, the plugin downloads the standalone `meta-package-manager` binary from GitHub Releases the first time it runs on a server and caches it locally for reuse.
+- In `UVX` mode, the plugin invokes `uvx meta-package-manager==VERSION` instead of downloading a standalone binary.
 - Each non-combo run first asks `meta-package-manager` which package managers are available on the current server.
 - The plugin filters that list using your `Package Managers` JSON configuration.
 - Reports are emitted back to xyOps as Markdown job output.
@@ -355,7 +378,9 @@ A few details about how the plugin works at runtime:
 
 The plugin expects a xyOps job payload on STDIN and emits [XYWP](https://docs.xyops.io/xywp) / report output on STDOUT.
 
-Note that on first run it will attempt to download the standalone `meta-package-manager` binary from GitHub Releases.
+If you select the `Binary` launcher, the plugin will attempt to download the standalone `meta-package-manager` binary from GitHub Releases on first run.
+
+If you select the `UVX` launcher, make sure `uvx` is installed and available in the server's `PATH`.
 
 ### Report Only Example
 

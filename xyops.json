@@ -11,7 +11,7 @@
 				"title": "Package Manager",
 				"enabled": true,
 				"type": "event",
-				"command": "npx -y @pixlcore/xyplug-pkg@1.0.0",
+				"command": "npx -y @pixlcore/xyplug-pkg@1.0.1",
 				"script": "",
 				"kill": "all",
 				"runner": false,
@@ -178,6 +178,13 @@
 								}
 							]
 						}
+					},
+					{
+						"id": "launcher",
+						"title": "MPM Launcher",
+						"type": "select",
+						"value": "Binary, UVX",
+						"caption": "Select how to launch meta-package-manager. Use UVX if the standalone binary fails due to GLIBC compatibility issues."
 					},
 					{
 						"id": "managers",

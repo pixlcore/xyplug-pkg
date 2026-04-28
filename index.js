@@ -27,13 +27,16 @@ const app = {
 		let job = this.job = JSON.parse( chunks.join('') );
 		let params = this.params = this.job.params || {};
 		
+		if (!params.launcher) params.launcher = 'Binary';
 		if (!params.managers) params.managers = { '*': true };
 		if (!job.temp_dir) job.temp_dir = os.tmpdir();
 		
 		this.log("xyOps Package Manager starting run.");
 		
-		// download mpm binary or use cache
-		await this.download();
+		// configure the MPM launcher up front, but only initialize it for tools
+		// that actually need MPM.  The combo tool only combines prior job output.
+		this.setupLauncher();
+		if (params.tool != 'combo') await this.prepareLauncher();
 		
 		// first query for a list of installed package managers, and filter out user-disabled ones
 		if (params.tool != 'combo') {
@@ -154,7 +157,7 @@ const app = {
 		if (params.do_upgrade) {
 			this.log("Performing package upgrades now...");
 			let args = this.mgrIds.map( id => '--' + id ).concat('upgrade');
-			cp.execFileSync( this.mpmBin, args, {
+			this.execMpm( args, {
 				stdio: ['ignore', 'inherit', 'inherit'],
 				timeout: 1800 * 1000, // 30 minutes
 				maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -259,7 +262,7 @@ const app = {
 		
 		this.log("Generating SBOM file: " + file);
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -289,7 +292,7 @@ const app = {
 		
 		this.log("Installing packages: " + params.ids);
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -312,7 +315,7 @@ const app = {
 		
 		this.log("Upgrading packages: " + params.ids);
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -335,7 +338,7 @@ const app = {
 		
 		this.log("Removing packages: " + params.ids);
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -356,7 +359,7 @@ const app = {
 		
 		this.log("Generating backup file: " + file);
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -390,7 +393,7 @@ const app = {
 		args.push( 'restore' );
 		args.push( file );
 		
-		cp.execFileSync( this.mpmBin, args, {
+		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
 			timeout: 1800 * 1000, // 30 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -535,7 +538,7 @@ const app = {
 		// send mpm command and parse and return response
 		args.unshift('--output-format', 'json');
 		
-		let output = cp.execFileSync( this.mpmBin, args, {
+		let output = this.execMpm( args, {
 			stdio: ['ignore', 'pipe', 'inherit'],
 			timeout: 300 * 1000, // 5 minutes
 			maxBuffer: 1024 * 1024 * 128, // 128 MB
@@ -546,8 +549,53 @@ const app = {
 		return JSON.parse(output);
 	},
 	
+	setupLauncher() {
+		// normalize the Event parameter into one of our supported launcher modes
+		this.launcher = String(this.params.launcher || 'Binary').toLowerCase().trim();
+		
+		if (this.launcher == 'binary') {
+			this.mpmBin = ''; // will be set in download
+			this.mpmBaseArgs = [];
+		}
+		else if (this.launcher == 'uvx') {
+			this.mpmBin = 'uvx';
+			this.mpmBaseArgs = ['meta-package-manager==' + MPM_VERSION];
+		}
+		else {
+			throw new Error("Unknown MPM launcher selection: " + this.params.launcher);
+		}
+		
+		this.log("Using MPM launcher: " + this.launcher);
+	},
+	
+	async prepareLauncher() {
+		// initialize the selected launcher before the first MPM command runs
+		if (this.launcher == 'binary') return await this.download();
+		if (this.launcher == 'uvx') return;
+		throw new Error("Unsupported MPM launcher: " + this.launcher);
+	},
+	
+	execMpm(args, options) {
+		// run MPM through the configured launcher while keeping all callers simple
+		let full_args = (this.mpmBaseArgs || []).concat(args || []);
+		let output = '';
+		
+		try {
+			output = cp.execFileSync( this.mpmBin, full_args, options );
+		}
+		catch (err) {
+			// give a clearer message if uvx was selected but is not installed
+			if (err && (err.code == 'ENOENT') && (this.launcher == 'uvx')) {
+				throw new Error("The 'uvx' executable could not be found in PATH on the target server.");
+			}
+			throw err;
+		}
+		
+		return output;
+	},
+	
 	async download() {
-		// download MPM binary
+		// download MPM binary for the standalone launcher
 		// https://github.com/kdeldycke/meta-package-manager/releases/download/v6.3.0/mpm-6.3.0-linux-arm64.bin
 		let plat = '';
 		switch (process.platform) {
