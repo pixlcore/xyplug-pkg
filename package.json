@@ -1,6 +1,6 @@
 {
 	"name": "@pixlcore/xyplug-pkg",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "An automatic package management system for the xyOps workflow automation system.",
 	"author": "Joseph Huckaby <jhuckaby@pixlcore.com>",
 	"homepage": "https://github.com/pixlcore/xyplug-pkg",
@@ -32,9 +32,5 @@
 	"dependencies": {},
 	"publishConfig": {
 		"access": "public"
-	},
-	"mpm": {
-		"url": "https://github.com/kdeldycke/meta-package-manager",
-		"version": "6.3.0"
 	}
 }

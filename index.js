@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Package Management Plugin for xyOps
+// System Package Management Plugin for xyOps
 // Copyright (c) 2026 PixlCore LLC
 // MIT License
 
@@ -10,12 +10,11 @@ const os = require('os');
 const cp = require('child_process');
 const crypto = require('crypto');
 const { pipeline } = require('stream/promises');
-const pkg = require('./package.json');
 
 const STATE_FILE = Path.join( os.tmpdir(), 'xyops-xyplug-pkg-state.json' );
 const IS_WINDOWS = !!(process.platform == 'win32');
-const MPM_VERSION = pkg.mpm.version;
-const MPM_BASE_URL = pkg.mpm.url;
+const MPM_VERSION = "6.3.0";
+const MPM_BASE_URL = "https://github.com/kdeldycke/meta-package-manager";
 
 const app = {
 	finalSent: false,

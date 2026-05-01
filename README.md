@@ -3,11 +3,11 @@
 
 Manage all your system packages using the excellent [meta-package-manager](https://github.com/kdeldycke/meta-package-manager) project. This Event Plugin can report on outdated packages, generate package inventory reports, create SBOM files, install or remove packages, perform upgrades, back up package state, restore package state, and assemble combined upgrade reports across multiple servers.
 
-This is a [xyOps](https://xyops.io) Event Plugin packaged as a pure Node.js / `npx` marketplace plugin. It is designed to be attached to a scheduled Event and run nightly or weekly, so you can keep visibility into package drift and optionally automate upgrades.
+This is a [xyOps](https://xyops.io) Event Plugin packaged as a pure Node.js marketplace plugin. It is designed to be attached to a scheduled Event and run nightly or weekly, so you can keep visibility into package drift and optionally automate upgrades.
 
 ## Features
 
-- Pure Node.js / `npx` marketplace plugin
+- Pure Node.js marketplace plugin
 - Supports two runtime launch methods for `meta-package-manager`: precompiled binary or `uvx`
 - Supports reporting, e-mail notifications, and actual package upgrades
 - Works across many different package managers on Linux, macOS, BSD, and Windows
@@ -17,8 +17,6 @@ This is a [xyOps](https://xyops.io) Event Plugin packaged as a pure Node.js / `n
 
 ## Requirements
 
-- `npx` (this comes pre-installed with xyOps and xySat)
-- Node.js 18 or newer
 - One or more supported package managers installed on the target server
 - Sufficient OS privileges for the operation you want to perform
 
