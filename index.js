@@ -13,7 +13,7 @@ const { pipeline } = require('stream/promises');
 
 const STATE_FILE = Path.join( os.tmpdir(), 'xyops-xyplug-pkg-state.json' );
 const IS_WINDOWS = !!(process.platform == 'win32');
-const MPM_VERSION = "6.3.0";
+const MPM_VERSION = "7.0.1";
 const MPM_BASE_URL = "https://github.com/kdeldycke/meta-package-manager";
 
 const app = {
