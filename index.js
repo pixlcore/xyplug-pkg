@@ -535,7 +535,7 @@ const app = {
 	
 	mpmCommand(args) {
 		// send mpm command and parse and return response
-		args.unshift('--output-format', 'json');
+		args.unshift('--table-format', 'json');
 		
 		let output = this.execMpm( args, {
 			stdio: ['ignore', 'pipe', 'inherit'],
