@@ -13,8 +13,10 @@ const { pipeline } = require('stream/promises');
 
 const STATE_FILE = Path.join( os.tmpdir(), 'xyops-xyplug-pkg-state.json' );
 const IS_WINDOWS = !!(process.platform == 'win32');
-const MPM_VERSION = "7.0.1";
+const MPM_VERSION = "7.1.0";
 const MPM_BASE_URL = "https://github.com/kdeldycke/meta-package-manager";
+const MPM_PYPI_SPEC_OFFLINE = "meta-package-manager[sbom-offline]==" + MPM_VERSION;
+const MPM_PYPI_SPEC_ONLINE = "meta-package-manager[sbom-offline,sbom-online]==" + MPM_VERSION;
 
 const app = {
 	finalSent: false,
@@ -254,12 +256,17 @@ const app = {
 		if (!params.file_format) params.file_format = 'JSON';
 		let file = `sbom-${params.sbom_format.toLowerCase()}-${job.server}.${params.file_format.toLowerCase()}`;
 		let args = this.mgrIds.map( id => '--' + id );
+		// Vulnerability enrichment is opt-in because it sends package
+		// coordinates to OSV.dev.  Without this flag, MPM renders the SBOM
+		// entirely from local package-manager data.
+		if (params.vuln_lookup) args.push( '--network' );
 		args.push( 'sbom' );
 		args.push( '--' + params.sbom_format.toLowerCase() );
 		args.push( '--format', params.file_format.toLowerCase() );
 		args.push( file );
 		
 		this.log("Generating SBOM file: " + file);
+		if (params.vuln_lookup) this.log("Including OSV.dev vulnerability lookup in SBOM.");
 		
 		this.execMpm( args, {
 			stdio: ['ignore', 'inherit', 'inherit'],
@@ -558,7 +565,13 @@ const app = {
 		}
 		else if (this.launcher == 'uvx') {
 			this.mpmBin = 'uvx';
-			this.mpmBaseArgs = ['meta-package-manager==' + MPM_VERSION];
+			// Include the SBOM writer extra so the SBOM tool works in UVX mode.
+			// v7.1.0 split the old [sbom] extra into [sbom-offline] and
+			// [sbom-online].  Only pull the online extra when the user enables
+			// vulnerability lookup, because it adds OSV.dev network support.
+			this.mpmBaseArgs = [
+				this.params.vuln_lookup ? MPM_PYPI_SPEC_ONLINE : MPM_PYPI_SPEC_OFFLINE
+			];
 		}
 		else {
 			throw new Error("Unknown MPM launcher selection: " + this.params.launcher);
@@ -595,7 +608,7 @@ const app = {
 	
 	async download() {
 		// download MPM binary for the standalone launcher
-		// https://github.com/kdeldycke/meta-package-manager/releases/download/v6.3.0/mpm-6.3.0-linux-arm64.bin
+		// https://github.com/kdeldycke/meta-package-manager/releases/download/v7.1.0/meta-package-manager-7.1.0-linux-arm64.bin
 		let plat = '';
 		switch (process.platform) {
 			case 'linux': plat = 'linux'; break;
@@ -604,7 +617,7 @@ const app = {
 		}
 		let arch = process.arch;
 		let ext = (IS_WINDOWS ? 'exe' : 'bin');
-		let url = MPM_BASE_URL + `/releases/download/v${MPM_VERSION}/mpm-${MPM_VERSION}-${plat}-${arch}.${ext}`;
+		let url = MPM_BASE_URL + `/releases/download/v${MPM_VERSION}/meta-package-manager-${MPM_VERSION}-${plat}-${arch}.${ext}`;
 		
 		this.mpmBin = Path.join( this.job.temp_dir, 'xyplug-pkg-mpm-' + MPM_VERSION + '-' + plat + '-' + arch + '.' + (IS_WINDOWS ? 'exe' : 'bin') );
 		if (fs.existsSync(this.mpmBin)) return;

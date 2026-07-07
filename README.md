@@ -67,7 +67,7 @@ These parameters are available at the plugin level:
 Available options:
 
 - `Binary`: Download and cache the precompiled standalone `meta-package-manager` executable, then run it directly.
-- `UVX`: Execute `meta-package-manager` via `uvx`, pinned to the plugin's bundled version, assuming `uvx` is already installed on the target server.
+- `UVX`: Execute `meta-package-manager` via `uvx`, pinned to the plugin's bundled version, assuming `uvx` is already installed on the target server.  The plugin includes the SBOM extras needed for the selected SBOM options.
 
 Why this exists:
 
@@ -217,6 +217,7 @@ Generates a SBOM file for the selected package managers and attaches it to the x
 |-----------|----------|-------------|
 | `SBOM Format` | Yes | SBOM standard to use: `SPDX` or `CycloneDX`. |
 | `File Format` | Yes | Output file format.  See below. |
+| `Vulnerability Lookup` | No | Query OSV.dev for known vulnerabilities and include the results in the SBOM where supported. |
 
 Supported SBOM combinations:
 
@@ -230,6 +231,8 @@ Behavior notes:
 - The generated filename looks like `sbom-STANDARD-SERVERID.EXT`, for example `sbom-spdx-s12345.json`.
 - The file is attached to the job output for download or downstream workflow use.
 - `CycloneDX` only supports `JSON` and `XML`.
+- By default, SBOM generation is fully offline and only uses local package-manager data.
+- If `Vulnerability Lookup` is enabled, the plugin passes `--network` to `meta-package-manager`, which sends package coordinates to [OSV.dev](https://osv.dev) for vulnerability lookup.  Leave this disabled if your environment should not make external SBOM enrichment requests.
 
 This is a good fit for compliance, security, asset inventory, and software supply chain workflows.
 
@@ -366,7 +369,7 @@ A few details about how the plugin works at runtime:
 
 - The plugin can launch `meta-package-manager` in one of two ways, depending on your `MPM Launcher` selection.
 - In `Binary` mode, the plugin downloads the standalone `meta-package-manager` binary from GitHub Releases the first time it runs on a server and caches it locally for reuse.
-- In `UVX` mode, the plugin invokes `uvx meta-package-manager==VERSION` instead of downloading a standalone binary.
+- In `UVX` mode, the plugin invokes `uvx meta-package-manager[sbom-offline]==VERSION` instead of downloading a standalone binary.  If `Vulnerability Lookup` is enabled for the SBOM tool, it uses `meta-package-manager[sbom-offline,sbom-online]==VERSION` instead.
 - Each non-combo run first asks `meta-package-manager` which package managers are available on the current server.
 - The plugin filters that list using your `Package Managers` JSON configuration.
 - Reports are emitted back to xyOps as Markdown job output.
