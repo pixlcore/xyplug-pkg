@@ -1,6 +1,6 @@
 {
 	"name": "@pixlcore/xyplug-pkg",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"description": "An automatic package management system for the xyOps workflow automation system.",
 	"author": "Joseph Huckaby <jhuckaby@pixlcore.com>",
 	"homepage": "https://github.com/pixlcore/xyplug-pkg",
