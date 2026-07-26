@@ -13,7 +13,8 @@ const { pipeline } = require('stream/promises');
 
 const STATE_FILE = Path.join( os.tmpdir(), 'xyops-xyplug-pkg-state.json' );
 const IS_WINDOWS = !!(process.platform == 'win32');
-const MPM_VERSION = "7.3.0";
+const IS_ROOT = !IS_WINDOWS && (typeof process.geteuid == 'function') && (process.geteuid() == 0);
+const MPM_VERSION = "7.4.0";
 const MPM_BASE_URL = "https://github.com/kdeldycke/meta-package-manager";
 const MPM_PYPI_SPEC_OFFLINE = "meta-package-manager[sbom-offline]==" + MPM_VERSION;
 const MPM_PYPI_SPEC_ONLINE = "meta-package-manager[sbom-offline,sbom-online]==" + MPM_VERSION;
@@ -39,7 +40,8 @@ const app = {
 		this.setupLauncher();
 		if (params.tool != 'combo') await this.prepareLauncher();
 		
-		// first query for a list of installed package managers, and filter out user-disabled ones
+		// Ask MPM for its safe default set of maintained package managers, then filter out
+		// user-disabled ones.  Deliberately omit --all-managers so unmaintained tools stay hidden.
 		if (params.tool != 'combo') {
 			let raw_mgrs = this.mpmCommand(['managers']);
 			let mgrs = Object.values(raw_mgrs).filter( mgr => !!mgr.available ).filter( function(mgr) { 
@@ -588,8 +590,12 @@ const app = {
 	},
 	
 	execMpm(args, options) {
-		// run MPM through the configured launcher while keeping all callers simple
-		let full_args = (this.mpmBaseArgs || []).concat(args || []);
+		// Run MPM through the configured launcher while keeping all callers simple.
+		// A root xySat process already has every privilege MPM could request, so disable
+		// MPM's sudo wrappers.  This also avoids requiring sudo to exist on minimal hosts.
+		let mpm_args = (args || []).slice(0);
+		if (IS_ROOT) mpm_args.unshift('--no-sudo');
+		let full_args = (this.mpmBaseArgs || []).concat(mpm_args);
 		let output = '';
 		
 		try {
@@ -608,7 +614,7 @@ const app = {
 	
 	async download() {
 		// download MPM binary for the standalone launcher
-		// https://github.com/kdeldycke/meta-package-manager/releases/download/v7.3.0/meta-package-manager-7.3.0-linux-arm64.bin
+		// https://github.com/kdeldycke/meta-package-manager/releases/download/v7.4.0/meta-package-manager-7.4.0-linux-arm64.bin
 		let plat = '';
 		switch (process.platform) {
 			case 'linux': plat = 'linux'; break;

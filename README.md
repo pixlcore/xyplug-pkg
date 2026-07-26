@@ -26,6 +26,8 @@ Notes:
 - If you use the `uvx` launcher, `uvx` must already be installed and available on every target server where the plugin will run.
 - Read-only tools such as reports and SBOM generation usually work with normal user permissions.
 - Mutating tools such as install, upgrade, remove, and restore may require administrator or root privileges, depending on the package manager.
+- When the job runner is already root, the plugin passes `--no-sudo` to MPM so package managers run directly without requiring the `sudo` executable.
+- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `7.4.0` invokes `sudo --non-interactive` for mutating MacPorts, FreeBSD `pkg`, and Snap operations, so it fails promptly instead of waiting for a password.  Firmware operations through `fwupd` require a suitable polkit rule or a root job runner.
 - The plugin only works with package managers that are both supported by `meta-package-manager` and actually detected on the current server.
 
 ## Overview
@@ -102,16 +104,15 @@ Behavior notes:
 - `*` means "enable all detected managers by default."
 - Any manager explicitly set to `false` is excluded.
 - Any manager explicitly set to `true` is included, as long as it is detected on the current server.
+- `meta-package-manager` applies its own safe default selection before the plugin applies this configuration.  Managers that MPM classifies as unmaintained are not returned by discovery and cannot be enabled here.
 - If no supported managers are detected after filtering, the job fails.
 
 ## Supported Package Managers
 
-As of the bundled `meta-package-manager` version used by this plugin, the following package managers are supported:
+As of the bundled `meta-package-manager` version `7.4.0`, the following maintained package managers are supported:
 
 - [`apk`](https://gitlab.alpinelinux.org/alpine/apk-tools)
-- [`apm`](https://atom.io/packages)
 - [`apt`](https://wiki.debian.org/AptCLI)
-- [`apt-cyg`](https://github.com/transcode-open/apt-cyg)
 - [`apt-mint`](https://github.com/kdeldycke/meta-package-manager/issues/52)
 - [`asdf`](https://asdf-vm.com)
 - [`brew`](https://brew.sh)
@@ -140,7 +141,6 @@ As of the bundled `meta-package-manager` version used by this plugin, the follow
 - [`nix`](https://nixos.org)
 - [`npm`](https://www.npmjs.com)
 - [`opkg`](https://git.yoctoproject.org/cgit/cgit.cgi/opkg/)
-- [`pacaur`](https://github.com/E5ten/pacaur)
 - [`pacman`](https://wiki.archlinux.org/title/pacman)
 - [`pacstall`](https://pacstall.dev)
 - [`paru`](https://github.com/Morganamilo/paru)
@@ -163,7 +163,6 @@ As of the bundled `meta-package-manager` version used by this plugin, the follow
 - [`steamcmd`](https://developer.valvesoftware.com/wiki/SteamCMD)
 - [`stew`](https://github.com/marwanhawari/stew)
 - [`sun-tools`](https://docs.oracle.com/cd/E86824_01/html/E54763/pkginfo-1.html)
-- [`swupd`](https://github.com/clearlinux/swupd-client)
 - [`tazpkg`](https://slitaz.org)
 - [`tlmgr`](https://www.tug.org/texlive/)
 - [`topgrade`](https://github.com/topgrade-rs/topgrade)
@@ -186,6 +185,13 @@ Important notes:
 - Support here means `meta-package-manager` knows how to work with the manager.
 - Actual availability still depends on your operating system and what is installed on the target server.
 - The plugin automatically queries the current server and only operates on managers that are detected locally.
+
+MPM `7.4.0` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
+
+- [`apm`](https://atom.io/packages)
+- [`apt-cyg`](https://github.com/transcode-open/apt-cyg)
+- [`pacaur`](https://github.com/E5ten/pacaur)
+- [`swupd`](https://github.com/clearlinux/swupd-client)
 
 ## Tool Reference
 
@@ -227,6 +233,7 @@ Behavior notes:
 
 - The report is attached to the job output as Markdown.
 - Unlike the outdated report, this is a full inventory of all installed packages.
+- On FreeBSD, `pkg` reports every package registered in its database, including automatically installed dependencies.
 - If `Send Email` is enabled, the plugin sends the report after the job succeeds.
 
 This tool is useful for audits, baseline inventory snapshots, and software review workflows.
@@ -308,6 +315,7 @@ Removes one or more specific packages using the selected package managers.
 Behavior notes:
 
 - This is a destructive operation.
+- Removal keeps orphaned dependencies in place.  The plugin does not request MPM's optional orphan cascade.
 - Use with care, especially on shared servers or servers managed by configuration tools.
 
 ### Backup Packages
@@ -392,7 +400,8 @@ A few details about how the plugin works at runtime:
 - The plugin can launch `meta-package-manager` in one of two ways, depending on your `MPM Launcher` selection.
 - In `Binary` mode, the plugin downloads the standalone `meta-package-manager` binary from GitHub Releases the first time it runs on a server and caches it locally for reuse.
 - In `UVX` mode, the plugin invokes `uvx meta-package-manager[sbom-offline]==VERSION` instead of downloading a standalone binary.  If `Vulnerability Lookup` is enabled for the SBOM tool, it uses `meta-package-manager[sbom-offline,sbom-online]==VERSION` instead.
-- Each non-combo run first asks `meta-package-manager` which package managers are available on the current server.
+- When running with an effective user ID of `0`, the plugin passes MPM's global `--no-sudo` option because the job is already privileged.
+- Each non-combo run first asks `meta-package-manager` which maintained package managers are available on the current server.
 - The plugin filters that list using your `Package Managers` JSON configuration.
 - Reports are emitted back to xyOps as Markdown job output.
 - Generated files such as SBOM and package backup files are attached to the job output.
