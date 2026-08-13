@@ -27,7 +27,7 @@ Notes:
 - Read-only tools such as reports and SBOM generation usually work with normal user permissions.
 - Mutating tools such as install, upgrade, remove, and restore may require administrator or root privileges, depending on the package manager.
 - When the job runner is already root, the plugin passes `--no-sudo` to MPM so package managers run directly without requiring the `sudo` executable.
-- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `7.4.0` invokes `sudo --non-interactive` for mutating MacPorts, FreeBSD `pkg`, and Snap operations, so it fails promptly instead of waiting for a password.  Firmware operations through `fwupd` require a suitable polkit rule or a root job runner.
+- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `7.6.1` invokes `sudo --non-interactive` for mutating MacPorts, FreeBSD `pkg`, and Snap operations, so it fails promptly instead of waiting for a password.  Firmware operations through `fwupd` require a suitable polkit rule or a root job runner.
 - The plugin only works with package managers that are both supported by `meta-package-manager` and actually detected on the current server.
 
 ## Overview
@@ -109,7 +109,7 @@ Behavior notes:
 
 ## Supported Package Managers
 
-As of the bundled `meta-package-manager` version `7.4.0`, the following maintained package managers are supported:
+As of the bundled `meta-package-manager` version `7.6.1`, the following maintained package managers are supported:
 
 - [`apk`](https://gitlab.alpinelinux.org/alpine/apk-tools)
 - [`apt`](https://wiki.debian.org/AptCLI)
@@ -169,6 +169,7 @@ As of the bundled `meta-package-manager` version `7.4.0`, the following maintain
 - [`urpmi`](https://wiki.mageia.org/en/URPMI)
 - [`uv`](https://docs.astral.sh/uv)
 - [`uvx`](https://docs.astral.sh/uv/guides/tools/)
+- [`vim-pack`](https://neovim.io/doc/user/pack.html)
 - [`vscode`](https://code.visualstudio.com)
 - [`vscodium`](https://vscodium.com)
 - [`winget`](https://github.com/microsoft/winget-cli)
@@ -178,6 +179,7 @@ As of the bundled `meta-package-manager` version `7.4.0`, the following maintain
 - [`yay`](https://github.com/Jguer/yay)
 - [`yum`](http://yum.baseurl.org)
 - [`zerobrew`](https://github.com/lucasgelfond/zerobrew)
+- [`zinit`](https://github.com/zdharma-continuum/zinit)
 - [`zypper`](https://en.opensuse.org/Portal:Zypper)
 
 Important notes:
@@ -186,12 +188,13 @@ Important notes:
 - Actual availability still depends on your operating system and what is installed on the target server.
 - The plugin automatically queries the current server and only operates on managers that are detected locally.
 
-MPM `7.4.0` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
+MPM `7.6.1` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
 
 - [`apm`](https://atom.io/packages)
 - [`apt-cyg`](https://github.com/transcode-open/apt-cyg)
 - [`pacaur`](https://github.com/E5ten/pacaur)
 - [`swupd`](https://github.com/clearlinux/swupd-client)
+- [`volta`](https://volta.sh)
 
 ## Tool Reference
 
