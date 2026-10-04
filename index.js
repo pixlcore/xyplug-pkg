@@ -14,7 +14,7 @@ const { pipeline } = require('stream/promises');
 const STATE_FILE = Path.join( os.tmpdir(), 'xyops-xyplug-pkg-state.json' );
 const IS_WINDOWS = !!(process.platform == 'win32');
 const IS_ROOT = !IS_WINDOWS && (typeof process.geteuid == 'function') && (process.geteuid() == 0);
-const MPM_VERSION = "7.6.1";
+const MPM_VERSION = "8.1.0";
 const MPM_BASE_URL = "https://github.com/kdeldycke/meta-package-manager";
 const MPM_PYPI_SPEC_OFFLINE = "meta-package-manager[sbom-offline]==" + MPM_VERSION;
 const MPM_PYPI_SPEC_ONLINE = "meta-package-manager[sbom-offline,sbom-online]==" + MPM_VERSION;
@@ -614,7 +614,6 @@ const app = {
 	
 	async download() {
 		// download MPM binary for the standalone launcher
-		// https://github.com/kdeldycke/meta-package-manager/releases/download/v7.6.1/meta-package-manager-7.6.1-linux-arm64.bin
 		let plat = '';
 		switch (process.platform) {
 			case 'linux': plat = 'linux'; break;

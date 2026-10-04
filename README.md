@@ -27,7 +27,7 @@ Notes:
 - Read-only tools such as reports and SBOM generation usually work with normal user permissions.
 - Mutating tools such as install, upgrade, remove, and restore may require administrator or root privileges, depending on the package manager.
 - When the job runner is already root, the plugin passes `--no-sudo` to MPM so package managers run directly without requiring the `sudo` executable.
-- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `7.6.1` invokes `sudo --non-interactive` for mutating MacPorts, FreeBSD `pkg`, and Snap operations, so it fails promptly instead of waiting for a password.  Firmware operations through `fwupd` require a suitable polkit rule or a root job runner.
+- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `8.1.0` supports `sudo`, `doas`, `run0`, and `pkexec` on Unix, and `gsudo` or Microsoft's `sudo.exe` on Windows.  MPM's escalation checks fail promptly when a password would be needed without a terminal.  Managers that handle their own privileges, such as `fwupd`, still require a suitable policy or an already privileged job runner.
 - The plugin only works with package managers that are both supported by `meta-package-manager` and actually detected on the current server.
 
 ## Overview
@@ -102,6 +102,7 @@ Please adjust to taste.
 Behavior notes:
 
 - `*` means "enable all detected managers by default."
+- Upgrading the plugin may add newly supported managers to this selection.  Please review the list before enabling automatic upgrades, or set `*` to `false` and explicitly enable the managers you want.
 - Any manager explicitly set to `false` is excluded.
 - Any manager explicitly set to `true` is included, as long as it is detected on the current server.
 - `meta-package-manager` applies its own safe default selection before the plugin applies this configuration.  Managers that MPM classifies as unmaintained are not returned by discovery and cannot be enabled here.
@@ -109,92 +110,183 @@ Behavior notes:
 
 ## Supported Package Managers
 
-As of the bundled `meta-package-manager` version `7.6.1`, the following maintained package managers are supported:
+As of the bundled `meta-package-manager` version `8.1.0`, the following maintained package managers are supported:
 
+- [`am`](https://mpm.run/managers/am/)
+- [`antidote`](https://mpm.run/managers/antidote/)
+- [`antigen`](https://mpm.run/managers/antigen/)
+- [`antigravity-cli-plugins`](https://mpm.run/managers/antigravity-cli-plugins/)
 - [`apk`](https://gitlab.alpinelinux.org/alpine/apk-tools)
+- [`app-manager`](https://mpm.run/managers/app-manager/)
 - [`apt`](https://wiki.debian.org/AptCLI)
 - [`apt-mint`](https://github.com/kdeldycke/meta-package-manager/issues/52)
+- [`aptitude`](https://mpm.run/managers/aptitude/)
 - [`asdf`](https://asdf-vm.com)
+- [`aura`](https://mpm.run/managers/aura/)
+- [`basalt`](https://mpm.run/managers/basalt/)
+- [`bin`](https://mpm.run/managers/bin/)
+- [`bob`](https://mpm.run/managers/bob/)
+- [`bpkg`](https://mpm.run/managers/bpkg/)
 - [`brew`](https://brew.sh)
+- [`bun`](https://mpm.run/managers/bun/)
 - [`cargo`](https://doc.rust-lang.org/cargo/)
 - [`cask`](https://github.com/Homebrew/homebrew-cask)
 - [`cave`](https://exherbo.org)
 - [`choco`](https://chocolatey.org)
+- [`choosenim`](https://mpm.run/managers/choosenim/)
 - [`chromebrew`](https://chromebrew.github.io)
+- [`claude-code-plugins`](https://mpm.run/managers/claude-code-plugins/)
+- [`clib`](https://mpm.run/managers/clib/)
 - [`composer`](https://getcomposer.org)
 - [`conda`](https://conda.org)
 - [`cpan`](https://www.cpan.org)
 - [`deb-get`](https://github.com/wimpysworld/deb-get)
+- [`dkp-pacman`](https://mpm.run/managers/dkp-pacman/)
 - [`dnf`](https://github.com/rpm-software-management/dnf)
 - [`dnf5`](https://github.com/rpm-software-management/dnf5)
+- [`dotnet`](https://mpm.run/managers/dotnet/)
+- [`elan`](https://mpm.run/managers/elan/)
+- [`emacs`](https://mpm.run/managers/emacs/)
 - [`emerge`](https://wiki.gentoo.org/wiki/Portage#emerge)
 - [`eopkg`](https://github.com/getsolus/eopkg/)
 - [`fink`](https://www.finkproject.org)
+- [`fisher`](https://mpm.run/managers/fisher/)
 - [`flatpak`](https://flatpak.org)
 - [`fwupd`](https://fwupd.org)
+- [`gcloud`](https://mpm.run/managers/gcloud/)
 - [`gem`](https://rubygems.org)
+- [`getnf`](https://mpm.run/managers/getnf/)
+- [`gext`](https://mpm.run/managers/gext/)
 - [`gh-ext`](https://cli.github.com)
+- [`ghcup`](https://mpm.run/managers/ghcup/)
+- [`go`](https://mpm.run/managers/go/)
 - [`guix`](https://guix.gnu.org)
+- [`gup`](https://mpm.run/managers/gup/)
+- [`haxelib`](https://mpm.run/managers/haxelib/)
+- [`hyprpm`](https://mpm.run/managers/hyprpm/)
+- [`ips`](https://mpm.run/managers/ips/)
+- [`jpm`](https://mpm.run/managers/jpm/)
+- [`julia`](https://mpm.run/managers/julia/)
+- [`juliaup`](https://mpm.run/managers/juliaup/)
+- [`krew`](https://mpm.run/managers/krew/)
+- [`lazy`](https://mpm.run/managers/lazy/)
+- [`luarocks`](https://mpm.run/managers/luarocks/)
+- [`lure`](https://mpm.run/managers/lure/)
 - [`macports`](https://www.macports.org)
+- [`mamba`](https://mpm.run/managers/mamba/)
 - [`mas`](https://github.com/mas-cli/mas)
+- [`mason`](https://mpm.run/managers/mason/)
+- [`micro`](https://mpm.run/managers/micro/)
+- [`microdnf`](https://mpm.run/managers/microdnf/)
+- [`micromamba`](https://mpm.run/managers/micromamba/)
+- [`miktex`](https://mpm.run/managers/miktex/)
 - [`mise`](https://mise.jdx.dev)
+- [`nala`](https://mpm.run/managers/nala/)
+- [`nimble`](https://mpm.run/managers/nimble/)
 - [`nix`](https://nixos.org)
 - [`npm`](https://www.npmjs.com)
+- [`oh-my-fish`](https://mpm.run/managers/oh-my-fish/)
+- [`ollama`](https://mpm.run/managers/ollama/)
+- [`opam`](https://mpm.run/managers/opam/)
 - [`opkg`](https://git.yoctoproject.org/cgit/cgit.cgi/opkg/)
 - [`pacman`](https://wiki.archlinux.org/title/pacman)
 - [`pacstall`](https://pacstall.dev)
+- [`pamac`](https://mpm.run/managers/pamac/)
 - [`paru`](https://github.com/Morganamilo/paru)
+- [`pear`](https://mpm.run/managers/pear/)
+- [`pearl`](https://mpm.run/managers/pearl/)
+- [`pi`](https://mpm.run/managers/pi/)
+- [`pikaur`](https://mpm.run/managers/pikaur/)
 - [`pip`](https://pip.pypa.io)
 - [`pipx`](https://pipx.pypa.io)
+- [`pipxu`](https://mpm.run/managers/pipxu/)
+- [`pixi`](https://mpm.run/managers/pixi/)
 - [`pkcon`](https://www.freedesktop.org/software/PackageKit/)
 - [`pkg`](https://github.com/freebsd/pkg)
 - [`pkg-tools`](https://man.openbsd.org/pkg_add)
 - [`pkgin`](https://pkgin.net)
+- [`pkgit`](https://mpm.run/managers/pkgit/)
+- [`pkgm`](https://mpm.run/managers/pkgm/)
+- [`platformio-core`](https://mpm.run/managers/platformio-core/)
 - [`pnpm`](https://pnpm.io)
 - [`ports`](https://www.freebsd.org/ports/)
+- [`protonplus`](https://mpm.run/managers/protonplus/)
+- [`prt-get`](https://mpm.run/managers/prt-get/)
 - [`pwsh-gallery`](https://www.powershellgallery.com)
+- [`pyenv`](https://mpm.run/managers/pyenv/)
+- [`raco`](https://mpm.run/managers/raco/)
+- [`roswell`](https://mpm.run/managers/roswell/)
+- [`rustup`](https://mpm.run/managers/rustup/)
 - [`scoop`](https://scoop.sh)
 - [`sdkman`](https://sdkman.io)
 - [`sfsu`](https://github.com/winpax/sfsu)
+- [`sheldon`](https://mpm.run/managers/sheldon/)
+- [`shelly`](https://mpm.run/managers/shelly/)
+- [`skills`](https://mpm.run/managers/skills/)
 - [`slapt-get`](https://software.jaos.org/)
 - [`snap`](https://snapcraft.io)
 - [`soar`](https://github.com/pkgforge/soar)
 - [`sorcery`](https://sourcemage.org)
+- [`spack`](https://mpm.run/managers/spack/)
 - [`steamcmd`](https://developer.valvesoftware.com/wiki/SteamCMD)
 - [`stew`](https://github.com/marwanhawari/stew)
 - [`sun-tools`](https://docs.oracle.com/cd/E86824_01/html/E54763/pkginfo-1.html)
 - [`tazpkg`](https://slitaz.org)
 - [`tlmgr`](https://www.tug.org/texlive/)
 - [`topgrade`](https://github.com/topgrade-rs/topgrade)
+- [`trizen`](https://mpm.run/managers/trizen/)
 - [`urpmi`](https://wiki.mageia.org/en/URPMI)
 - [`uv`](https://docs.astral.sh/uv)
 - [`uvx`](https://docs.astral.sh/uv/guides/tools/)
+- [`vagrant`](https://mpm.run/managers/vagrant/)
+- [`vcpkg`](https://mpm.run/managers/vcpkg/)
 - [`vim-pack`](https://neovim.io/doc/user/pack.html)
 - [`vscode`](https://code.visualstudio.com)
 - [`vscodium`](https://vscodium.com)
+- [`whalebrew`](https://mpm.run/managers/whalebrew/)
 - [`winget`](https://github.com/microsoft/winget-cli)
 - [`xbps`](https://github.com/void-linux/xbps)
+- [`xcodes`](https://mpm.run/managers/xcodes/)
 - [`yarn`](https://yarnpkg.com)
 - [`yarn-berry`](https://yarnpkg.com)
 - [`yay`](https://github.com/Jguer/yay)
+- [`yazi`](https://mpm.run/managers/yazi/)
 - [`yum`](http://yum.baseurl.org)
+- [`zef`](https://mpm.run/managers/zef/)
 - [`zerobrew`](https://github.com/lucasgelfond/zerobrew)
+- [`zeroinstall`](https://mpm.run/managers/zeroinstall/)
+- [`zim`](https://mpm.run/managers/zim/)
 - [`zinit`](https://github.com/zdharma-continuum/zinit)
+- [`zplug`](https://mpm.run/managers/zplug/)
+- [`zvm`](https://mpm.run/managers/zvm/)
 - [`zypper`](https://en.opensuse.org/Portal:Zypper)
 
 Important notes:
 
 - Support here means `meta-package-manager` knows how to work with the manager.
 - Actual availability still depends on your operating system and what is installed on the target server.
+- MPM requires Flatpak `1.9.1` or later, Scoop `0.6.0` or later, and WinGet `1.29.280` or later.  Older versions are not considered available.
+- Each manager supports its own set of operations.  A manager may support inventory or upgrades without supporting an outdated-package query.
 - The plugin automatically queries the current server and only operates on managers that are detected locally.
 
-MPM `7.6.1` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
+MPM `8.1.0` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
 
 - [`apm`](https://atom.io/packages)
 - [`apt-cyg`](https://github.com/transcode-open/apt-cyg)
 - [`pacaur`](https://github.com/E5ten/pacaur)
 - [`swupd`](https://github.com/clearlinux/swupd-client)
 - [`volta`](https://volta.sh)
+
+### Existing MPM Configuration
+
+If your servers also use MPM configuration files or environment variables, please check these changes when upgrading from MPM `7.x`:
+
+- Per-manager overrides now belong in `[mpm.overrides.<id>]`, replacing `[mpm.managers.<id>]`.  The old sections are ignored with a warning.
+- Negative manager settings such as `no_brew = true` and `MPM_NO_BREW=true` become `brew = false` and `MPM_BREW=false`.
+- Cooldown configuration now uses `[mpm.cooldown]` with `period` and `policy` keys.  The old `[mpm] cooldown` string still sets the period with a deprecation warning.
+- Automatically discovered configuration files now layer together, with project settings taking precedence over machine-wide settings.  MPM reads these files in addition to the plugin's parameters.
+
+The plugin's `Package Managers` JSON format is unchanged.  Please see the upstream [MPM v8.0.0 release notes](https://github.com/kdeldycke/meta-package-manager/releases/tag/v8.0.0) for the configuration migration details.
 
 ## Tool Reference
 
@@ -407,6 +499,7 @@ A few details about how the plugin works at runtime:
 - Each non-combo run first asks `meta-package-manager` which maintained package managers are available on the current server.
 - The plugin filters that list using your `Package Managers` JSON configuration.
 - Reports are emitted back to xyOps as Markdown job output.
+- MPM `8.1.0` also prints a package-change report in the job log after install, upgrade, remove, and restore operations.  These operations take additional inventory readings to report what changed.
 - Generated files such as SBOM and package backup files are attached to the job output.
 
 ## Local Testing
