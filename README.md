@@ -27,7 +27,7 @@ Notes:
 - Read-only tools such as reports and SBOM generation usually work with normal user permissions.
 - Mutating tools such as install, upgrade, remove, and restore may require administrator or root privileges, depending on the package manager.
 - When the job runner is already root, the plugin passes `--no-sudo` to MPM so package managers run directly without requiring the `sudo` executable.
-- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM `8.1.0` supports `sudo`, `doas`, `run0`, and `pkexec` on Unix, and `gsudo` or Microsoft's `sudo.exe` on Windows.  MPM's escalation checks fail promptly when a password would be needed without a terminal.  Managers that handle their own privileges, such as `fwupd`, still require a suitable policy or an already privileged job runner.
+- For non-root unattended jobs, configure non-interactive privileges for managers that require escalation.  MPM supports `sudo`, `doas`, `run0`, and `pkexec` on Unix, and `gsudo` or Microsoft's `sudo.exe` on Windows.  MPM's escalation checks fail promptly when a password would be needed without a terminal.  Managers that handle their own privileges, such as `fwupd`, still require a suitable policy or an already privileged job runner.
 - The plugin only works with package managers that are both supported by `meta-package-manager` and actually detected on the current server.
 
 ## Overview
@@ -110,7 +110,7 @@ Behavior notes:
 
 ## Supported Package Managers
 
-As of the bundled `meta-package-manager` version `8.1.0`, the following maintained package managers are supported:
+The bundled `meta-package-manager` supports the following maintained package managers:
 
 - [`am`](https://mpm.run/managers/am/)
 - [`antidote`](https://mpm.run/managers/antidote/)
@@ -265,11 +265,10 @@ Important notes:
 
 - Support here means `meta-package-manager` knows how to work with the manager.
 - Actual availability still depends on your operating system and what is installed on the target server.
-- MPM requires Flatpak `1.9.1` or later, Scoop `0.6.0` or later, and WinGet `1.29.280` or later.  Older versions are not considered available.
 - Each manager supports its own set of operations.  A manager may support inventory or upgrades without supporting an outdated-package query.
 - The plugin automatically queries the current server and only operates on managers that are detected locally.
 
-MPM `8.1.0` still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
+MPM still contains integrations for the following unmaintained package managers, but excludes them from default discovery.  This plugin follows that safer upstream default and does not operate on them:
 
 - [`apm`](https://atom.io/packages)
 - [`apt-cyg`](https://github.com/transcode-open/apt-cyg)
@@ -279,14 +278,27 @@ MPM `8.1.0` still contains integrations for the following unmaintained package m
 
 ### Existing MPM Configuration
 
-If your servers also use MPM configuration files or environment variables, please check these changes when upgrading from MPM `7.x`:
+If your servers use their own MPM configuration, please check these settings:
+
+- The `--ignore-auto-updates` / `--include-auto-updates` options and the global and per-manager `ignore_auto_updates` settings have been removed.  The plugin does not use these settings, so its default behavior is unchanged: auto-updating Homebrew casks remain excluded from outdated reports and full upgrades.
+- Custom manager definitions are now refused when loaded from remote or unsafe configuration files.  If you use custom definitions, make sure the local configuration file and its containing directory are writable only by the account running MPM.
+
+To include auto-updating casks, replace the old setting with the following configuration:
+
+```toml
+[mpm.overrides.cask]
+operations.outdated.extra_args = ["--greedy"]
+operations.upgrade_all.extra_args = ["--greedy"]
+```
+
+For older MPM configuration files or environment variables, please also check these migration notes:
 
 - Per-manager overrides now belong in `[mpm.overrides.<id>]`, replacing `[mpm.managers.<id>]`.  The old sections are ignored with a warning.
 - Negative manager settings such as `no_brew = true` and `MPM_NO_BREW=true` become `brew = false` and `MPM_BREW=false`.
 - Cooldown configuration now uses `[mpm.cooldown]` with `period` and `policy` keys.  The old `[mpm] cooldown` string still sets the period with a deprecation warning.
 - Automatically discovered configuration files now layer together, with project settings taking precedence over machine-wide settings.  MPM reads these files in addition to the plugin's parameters.
 
-The plugin's `Package Managers` JSON format is unchanged.  Please see the upstream [MPM v8.0.0 release notes](https://github.com/kdeldycke/meta-package-manager/releases/tag/v8.0.0) for the configuration migration details.
+The plugin's `Package Managers` JSON format is unchanged.  Please see the upstream [MPM release notes](https://github.com/kdeldycke/meta-package-manager/releases) for the configuration migration details.
 
 ## Tool Reference
 
@@ -499,7 +511,7 @@ A few details about how the plugin works at runtime:
 - Each non-combo run first asks `meta-package-manager` which maintained package managers are available on the current server.
 - The plugin filters that list using your `Package Managers` JSON configuration.
 - Reports are emitted back to xyOps as Markdown job output.
-- MPM `8.1.0` also prints a package-change report in the job log after install, upgrade, remove, and restore operations.  These operations take additional inventory readings to report what changed.
+- MPM also prints a package-change report in the job log after install, upgrade, remove, and restore operations.  These operations take additional inventory readings to report what changed.  Packages held back by a cooldown use the status `cooldown`, with release and eligibility dates when available.
 - Generated files such as SBOM and package backup files are attached to the job output.
 
 ## Local Testing
